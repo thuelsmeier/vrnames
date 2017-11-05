@@ -7,7 +7,7 @@ p = os.path.join(os.path.dirname(__file__), 'lib', 'char_spacing.dict')
 with open(p, 'rb') as f:
     data = pickle.load(f)
 
-CB_COUNTER=0
+CB_COUNTER = 0
 appWindow = 0
 windowOpacity = 0.3
 
@@ -36,16 +36,50 @@ def acMain(ac_version):
 def acUpdate(deltaT):
     global appWindow, windowOpacity
     ac.setBackgroundOpacity(appWindow, windowOpacity)
-    getDriverInformation()
+    detectionArea = getDetectionArea()
+    #ac.console(detectionArea)
+    getDriverInformation(detectionArea)
 
-def getDriverInformation():
+def getDetectionArea():
+    posX, posZ, posY = ac.getCarState(0, acsys.CS.WorldPosition)
+    rads = getRotation(0)
+    PointTopLeftX, PointTopLeftY = move_vector((posX, posY + 200), rads - math.radians(55), (posX, posY))
+    PointTopRightX, PointTopRightY = move_vector((posX, posY + 200), rads + math.radians(55), (posX, posY))
+
+    return ((posX, posY), (PointTopLeftX, PointTopLeftY), (PointTopRightX, PointTopRightY))
+
+def getDriverInformation(detectionArea):
     global labelStorage
+    triangle = Triangle(detectionArea[0], detectionArea[1], detectionArea[2])
+    setLabel = 0
     for x in range(ac.getCarsCount()):
-        ac.setText(labelStorage[x], ac.getDriverName(x) + " " + str(getRotation(x)))
+        posX, posZ, posY = ac.getCarState(x, acsys.CS.WorldPosition)
+        if triangle.isInside((posX, posY)) and x != 0:
+            newPosition = getRenderPosition(x, detectionArea, (posX, posY))
+            ac.setText(labelStorage[setLabel], ac.getDriverName(x))
+            ac.setPosition(labelStorage[setLabel], (newPosition * 500) / 110, 115)
+            setLabel += 1
+
+    for z in range(ac.getCarsCount() - setLabel):
+        ac.setText(labelStorage[setLabel + z], "")
+
+def getRenderPosition(carId, detectionArea, carPosition):
+    vect_x = detectionArea[1][0] - detectionArea[0][0]
+    vect_y = detectionArea[1][1] - detectionArea[0][1]
+
+    triangleAngle = math.atan2(vect_y, vect_x)
+
+    carVect_x = carPosition[0] - detectionArea[0][0]
+    carVect_y = carPosition[1] - detectionArea[0][1]
+
+    carAngle = math.atan2(carVect_y, carVect_x)
+
+    return triangleAngle - carAngle
+
 
 def getRotation(carId):
-    fx1, fy1, fz1 = ac.getCarState(carId, acsys.CS.TyreContactPoint, acsys.WHEELS.FL)
-    fx2, fy2, fz2 = ac.getCarState(carId, acsys.CS.TyreContactPoint, acsys.WHEELS.FR)
+    fx1,fy1,fz1 = ac.getCarState(carId, acsys.CS.TyreContactPoint, acsys.WHEELS.FL)
+    fx2,fy2,fz2 = ac.getCarState(carId, acsys.CS.TyreContactPoint, acsys.WHEELS.FR)
     #point betweeen wheels is both added together, and halved
     pbwX = (fx1 + fx2) / 2
     pbwZ = (fz1 + fz2) / 2
@@ -90,7 +124,37 @@ def getPixelLengthOfText(text):
             userSpace += 10
     return userSpace
 
+class Triangle:
+    def __init__(self, p1, p2, p3):
+        self.p1 = p1
+        self.p2 = p2
+        self.p3 = p3
 
+        # optimisation
+        self.precalcs1 = self.p1[1] * self.p3[0] - self.p1[0] * self.p3[1]
+        self.precalcs2 = (self.p3[1] - self.p1[1])
+        self.precalcs3 = (self.p1[0] - self.p3[0])
+
+        self.precalct1 = self.p1[0] * self.p2[1] - self.p1[1] * self.p2[0]
+        self.precalct2 = (self.p1[1] - self.p2[1])
+        self.precalct3 = (self.p2[0] - self.p1[0])
+
+        self.precalcA = -self.p2[1] * self.p3[0] + self.p1[1] * (self.p3[0] - self.p2[0]) + self.p1[0] * (
+        self.p2[1] - self.p3[1]) + self.p2[0] * self.p3[1]
+
+    def isInside(self, pt):
+        s = self.precalcs1 + self.precalcs2 * pt[0] + self.precalcs3 * pt[1]
+        t = self.precalct1 + self.precalct2 * pt[0] + self.precalct3 * pt[1]
+
+        if ((s < 0) != (t < 0)):
+            return False
+
+        A = self.precalcA
+        if (A < 0.0):
+            s = -s
+            t = -t
+            A = -A
+        return ((s > 0) and (t > 0) and ((s + t) <= A))
 
 # =============================================================================
 # >> HELPER FUNCTIONS  (by Hannes)
