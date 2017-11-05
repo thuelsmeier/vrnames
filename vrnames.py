@@ -9,7 +9,7 @@ with open(p, 'rb') as f:
 
 CB_COUNTER = 0
 appWindow = 0
-windowOpacity = 0.3
+windowOpacity = 0
 windowSizeX = 1920
 windowSizeY = 1080
 
@@ -24,7 +24,7 @@ def acMain(ac_version):
     ac.setTitle(appWindow, "")
     ac.setSize(appWindow, windowSizeX, windowSizeY)
     ac.drawBorder(appWindow,0)
-    ac.setBackgroundOpacity(appWindow, 0.8)
+    ac.setBackgroundOpacity(appWindow, 0)
     ac.setIconPosition(appWindow, -9000, 0)
 
     for x in range(ac.getCarsCount()):
