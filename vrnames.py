@@ -9,7 +9,7 @@ with open(p, 'rb') as f:
 
 CB_COUNTER = 0
 appWindow = 0
-windowOpacity = 0
+windowOpacity = 0.3
 windowSizeX = 1920
 windowSizeY = 1080
 
