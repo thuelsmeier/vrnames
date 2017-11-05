@@ -10,6 +10,8 @@ with open(p, 'rb') as f:
 CB_COUNTER = 0
 appWindow = 0
 windowOpacity = 0.3
+windowSizeX = 1920
+windowSizeY = 1080
 
 initialLabelText = "Welcome to VR-Names. Press F1 for settings"
 driverInformation = []
@@ -20,7 +22,7 @@ def acMain(ac_version):
 
     appWindow=ac.newApp("VR-Names")
     ac.setTitle(appWindow, "")
-    ac.setSize(appWindow, 500, 250)
+    ac.setSize(appWindow, windowSizeX, windowSizeY)
     ac.drawBorder(appWindow,0)
     ac.setBackgroundOpacity(appWindow, 0.8)
     ac.setIconPosition(appWindow, -9000, 0)
@@ -57,7 +59,7 @@ def getDriverInformation(detectionArea):
         if triangle.isInside((posX, posY)) and x != 0:
             newPosition = getRenderPosition(x, detectionArea, (posX, posY))
             ac.setText(labelStorage[setLabel], ac.getDriverName(x))
-            ac.setPosition(labelStorage[setLabel], (newPosition * 500) / 110, 115)
+            ac.setPosition(labelStorage[setLabel], (newPosition * windowSizeX) / 110, (windowSizeY / 2) - 20)
             setLabel += 1
 
     for z in range(ac.getCarsCount() - setLabel):
@@ -74,7 +76,7 @@ def getRenderPosition(carId, detectionArea, carPosition):
 
     carAngle = math.atan2(carVect_y, carVect_x)
 
-    return triangleAngle - carAngle
+    return math.degrees(carAngle - triangleAngle)
 
 
 def getRotation(carId):
