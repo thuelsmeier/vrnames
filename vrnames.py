@@ -17,15 +17,27 @@ initialLabelText = "Welcome to VR-Names."
 driverInformation = []
 labelStorage = []
 
+
+spinner_y_offset = 0
+
 def acMain(ac_version):
-    global appWindow, labelStorage
+    global appWindow, labelStorage, spinner_y_offset
 
     appWindow=ac.newApp("VR-Names")
     ac.setTitle(appWindow, "VR-names")
-    ac.setSize(appWindow, 200, 100)
+    ac.setSize(appWindow, 200, 80)
     ac.drawBorder(appWindow,0)
     ac.setBackgroundOpacity(appWindow, 0)
+
     # ac.setIconPosition(appWindow, -9000, 0)
+
+
+    spinner_y_offset = ac.addSpinner(appWindow,"NameOffset")
+    ac.setRange( spinner_y_offset, -100, 100)
+    ac.setValue(spinner_y_offset, 0)
+    ac.setStep(spinner_y_offset,1)
+    ac.setPosition(spinner_y_offset,10, 100)
+
 
     for x in range(ac.getCarsCount()):
         label = ac.addLabel(appWindow, "")
@@ -52,7 +64,7 @@ def getDetectionArea():
     return ((posX, posY), (PointTopLeftX, PointTopLeftY), (PointTopRightX, PointTopRightY))
 
 def getDriverInformation(detectionArea):
-    global labelStorage,appPosX,appPosY
+    global labelStorage,appPosX,appPosY,spinner_y_offset
     triangle = Triangle(detectionArea[0], detectionArea[1], detectionArea[2])
     setLabel = 0
     for x in range(ac.getCarsCount()):
@@ -64,7 +76,8 @@ def getDriverInformation(detectionArea):
             newPosition = getRenderPosition(x, detectionArea, (posX, posY))
             ac.setText(labelStorage[setLabel], ac.getDriverName(x))
             xPos = (((newPosition * windowSizeX) / 110) - appPosX)
-            yPos = (((windowSizeY / 2) - 20) - appPosY)
+            yOffset = ac.getValue(spinner_y_offset)
+            yPos = (((windowSizeY / 2) - 20) - appPosY) + int(yOffset)
             fontSize = 10 * (1 / (distance / 100))
             ac.setPosition(labelStorage[setLabel], xPos, yPos)
             ac.setFontSize(labelStorage[setLabel], fontSize)
