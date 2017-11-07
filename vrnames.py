@@ -13,7 +13,7 @@ windowOpacity = 0.3
 windowSizeX = 1920
 windowSizeY = 1080
 
-initialLabelText = "Welcome to VR-Names. Press F1 for settings"
+initialLabelText = "Welcome to VR-Names."
 driverInformation = []
 labelStorage = []
 
@@ -21,11 +21,11 @@ def acMain(ac_version):
     global appWindow, labelStorage
 
     appWindow=ac.newApp("VR-Names")
-    ac.setTitle(appWindow, "")
-    ac.setSize(appWindow, windowSizeX, windowSizeY)
+    ac.setTitle(appWindow, "VR-names")
+    ac.setSize(appWindow, 200, 100)
     ac.drawBorder(appWindow,0)
     ac.setBackgroundOpacity(appWindow, 0)
-    ac.setIconPosition(appWindow, -9000, 0)
+    # ac.setIconPosition(appWindow, -9000, 0)
 
     for x in range(ac.getCarsCount()):
         label = ac.addLabel(appWindow, "")
@@ -36,7 +36,8 @@ def acMain(ac_version):
     return "vrnames"
 
 def acUpdate(deltaT):
-    global appWindow, windowOpacity
+    global appWindow, windowOpacity,appPosX,appPosY
+    appPosX,appPosY = ac.getPosition(appWindow)
     ac.setBackgroundOpacity(appWindow, windowOpacity)
     detectionArea = getDetectionArea()
     #ac.console(detectionArea)
@@ -51,15 +52,22 @@ def getDetectionArea():
     return ((posX, posY), (PointTopLeftX, PointTopLeftY), (PointTopRightX, PointTopRightY))
 
 def getDriverInformation(detectionArea):
-    global labelStorage
+    global labelStorage,appPosX,appPosY
     triangle = Triangle(detectionArea[0], detectionArea[1], detectionArea[2])
     setLabel = 0
     for x in range(ac.getCarsCount()):
         posX, posZ, posY = ac.getCarState(x, acsys.CS.WorldPosition)
         if triangle.isInside((posX, posY)) and x != 0:
+            vect_x = posX - detectionArea[0][0]
+            vect_y = posY - detectionArea[0][1]
+            distance = math.sqrt(math.pow(vect_x,2) + math.pow(vect_y,2))
             newPosition = getRenderPosition(x, detectionArea, (posX, posY))
             ac.setText(labelStorage[setLabel], ac.getDriverName(x))
-            ac.setPosition(labelStorage[setLabel], (newPosition * windowSizeX) / 110, (windowSizeY / 2) - 20)
+            xPos = (((newPosition * windowSizeX) / 110) - appPosX)
+            yPos = (((windowSizeY / 2) - 20) - appPosY)
+            fontSize = 10 * (1 / (distance / 100))
+            ac.setPosition(labelStorage[setLabel], xPos, yPos)
+            ac.setFontSize(labelStorage[setLabel], fontSize)
             setLabel += 1
 
     for z in range(ac.getCarsCount() - setLabel):
@@ -114,8 +122,8 @@ def move_vector(v, angle, anchor):
 
 def setInitialLabel():
     global appWindow, initialLabelText
-    beginningLabel = ac.addLabel(appWindow, initialLabelText)
-    ac.setPosition(beginningLabel, (500 - getPixelLengthOfText(initialLabelText)) / 2, 125)
+    # beginningLabel = ac.addLabel(appWindow, initialLabelText)
+    # ac.setPosition(beginningLabel, (500 - getPixelLengthOfText(initialLabelText)) / 2, 125)
 
 def getPixelLengthOfText(text):
     userSpace = 0
